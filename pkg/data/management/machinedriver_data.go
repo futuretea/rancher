@@ -29,6 +29,7 @@ const (
 	SoftLayerDriver    = "softlayer"
 	Vmwaredriver       = "vmwarevsphere"
 	GoogleDriver       = "google"
+	HarvesterDriver       = "harvester"
 )
 
 var DriverData = map[string]map[string][]string{
@@ -46,6 +47,7 @@ var DriverData = map[string]map[string][]string{
 	SoftLayerDriver:    {"privateCredentialFields": []string{"apiKey"}},
 	Vmwaredriver:       {"publicCredentialFields": []string{"username", "vcenter", "vcenterPort"}, "privateCredentialFields": []string{"password"}},
 	GoogleDriver:       {"privateCredentialFields": []string{"authEncodedJson"}},
+	HarvesterDriver:    {"privateCredentialFields": []string{"kubeconfigContentBase64"}},
 }
 
 var driverDefaults = map[string]map[string]string{
@@ -96,6 +98,9 @@ func addMachineDrivers(management *config.ManagementContext) error {
 	linodeBuiltin := true
 	if dl := os.Getenv("CATTLE_DEV_MODE"); dl != "" {
 		linodeBuiltin = false
+	}
+	if err := addMachineDriver(HarvesterDriver, "http://172.16.4.20/new-drivers/docker-machine-driver-harvester-07061104.tar.gz", "https://harvester-node-driver.s3.amazonaws.com/ui/v0.1.4/component.js", "", []string{"harvester-node-driver.s3.amazonaws.com", "172.16.4.20"}, false, false, false, management); err != nil {
+		return err
 	}
 	if err := addMachineDriver(Linodedriver, "https://github.com/linode/docker-machine-driver-linode/releases/download/v0.1.8/docker-machine-driver-linode_linux-amd64.zip", "/assets/rancher-ui-driver-linode/component.js", "b31b6a504c59ee758d2dda83029fe4a85b3f5601e22dfa58700a5e6c8f450dc7", []string{"api.linode.com"}, linodeBuiltin, linodeBuiltin, false, management); err != nil {
 		return err
