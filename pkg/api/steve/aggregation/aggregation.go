@@ -6,16 +6,17 @@ import (
 	"regexp"
 	"sort"
 	"sync"
-	"time"
 
 	"github.com/gorilla/mux"
 	v3 "github.com/rancher/rancher/pkg/apis/management.cattle.io/v3"
-	mgmtcontrollers "github.com/rancher/rancher/pkg/generated/controllers/management.cattle.io/v3"
 	"github.com/rancher/remotedialer"
 	"github.com/rancher/steve/pkg/proxy"
 	"github.com/rancher/wrangler/v3/pkg/relatedresource"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
+
+	mgmtcontrollers "github.com/rancher/rancher/pkg/generated/controllers/management.cattle.io/v3"
 )
 
 var (
@@ -96,14 +97,16 @@ func (h *aggregationHandler) makeHandler(uuid string) http.Handler {
 
 	next := proxy.ImpersonatingHandler("", cfg)
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		for i := 0; i < 15; i++ {
-			if !h.remote.HasSession(key) {
-				time.Sleep(time.Second)
-			}
-		}
+		//for i := 0; i < 15; i++ {
+		//	if !h.remote.HasSession(key) {
+		//		time.Sleep(time.Second)
+		//	}
+		//}
 		if !h.remote.HasSession(key) {
-			http.Error(rw, "Handler disconnected", http.StatusServiceUnavailable)
-			return
+			clients := h.remote.ListClients()
+			logrus.Warnf("Handler for %s disconnected, clients: %s", key, clients)
+			//http.Error(rw, "Handler disconnected", http.StatusServiceUnavailable)
+			//return
 		}
 
 		if prefix := clusterPrefixRegexp.FindString(req.URL.Path); prefix != "" {
